@@ -94,7 +94,7 @@ APP.Spaceship.prototype.rotate = function(x, y, angle) {
 
 APP.view = {
   init: function() {
-    APP.view.keyPresser = $(document).keypress(APP.controller.keyHandler);
+    APP.view.keyPresser = $(document).keydown(APP.controller.keyHandler);
   },
 
   roidBody: function(asteroid){
