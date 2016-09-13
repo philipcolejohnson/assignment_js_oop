@@ -6,6 +6,8 @@ BOARD_HEIGHT = 400;
 MAX_SPEED = 10;
 MAX_SIZE = 4;
 TIC_INTERVAL = 25;
+MISSILE_SPEED = 10;
+SHOT_DURATION = 35;
 
 var APP = APP || {};
 
@@ -49,19 +51,24 @@ APP.SpaceObject.prototype.tic = function() {
 APP.Missile = function(x, y, dir){
   APP.SpaceObject.call(this, x, y);
   this.direction = dir;
+  this.distance = 0;
   this.x = x;
   this.y = y;
-  this.velX = 2;
-  this.velY = 2;
-};
-APP.Missile.prototype.fire = function() {
-  var rads = this.direction * Math.PI / 180;
-  this.velX += Math.sin(rads) * -1.3;
-  this.velY += Math.cos(rads) * -1.3;
+  this.fire = function(direction) {
+    var rads = direction * Math.PI / 180;
+    this.velX += Math.sin(rads) * -MISSILE_SPEED;
+    this.velY += Math.cos(rads) * -MISSILE_SPEED;
+  };
+  this.fire(dir);
 };
 
 APP.Missile.prototype = Object.create(APP.SpaceObject.prototype);
 APP.Missile.prototype.constructor = APP.Missile;
+
+APP.Missile.prototype.tic = function() {
+  this.distance += 1;
+  return APP.SpaceObject.prototype.tic.call(this);
+};
 
 APP.Asteroid = function(size,x,y,velX, velY) {
   this.size = size || Math.floor( Math.random() * MAX_SIZE ) + 1;
@@ -157,6 +164,10 @@ APP.view = {
     for(var i = 0; i < APP.game.asteroids.length; i++) {
       APP.view.roidBody(APP.game.asteroids[i]);
     }
+
+    for(i = 0; i < APP.game.shots.length; i++) {
+      APP.view.shotBody(APP.game.shots[i]);
+    }
   },
 
   shipBody: function(spaceship) {
@@ -185,9 +196,18 @@ APP.view = {
     context.fill();
   },
 
-  shotBody: function(){
+  shotBody: function(missile){
+    var canvas = document.getElementById('board');
+    var context = canvas.getContext("2d");
 
-    
+    context.beginPath();
+    context.arc(missile.x, missile.y, 3, 0, 2 * Math.PI, false);
+    context.fillStyle = 'red';
+    context.fill();
+    context.lineWidth = 1;
+    context.strokeStyle = "red";
+    context.stroke();
+    context.closePath();
   }
 };
 
@@ -206,6 +226,9 @@ APP.controller = {
     }
     for(var j = 0; j < APP.game.shots.length; j++) {
       APP.game.shots[j].tic();
+      if ( APP.game.shots[j].distance > SHOT_DURATION) {
+        APP.game.shots.splice(j, 1);
+      }
     }
   },
 
