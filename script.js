@@ -23,7 +23,7 @@ Asteroid.prototype.tic = function() {
 // console.log(ast2);
 
 var asteroids = [];
-for (var i = 0; i < 1000000; i++) {
+for (var i = 0; i < 100000; i++) {
     var x = Math.random() * 50;
     var y = Math.random() * 50;
     var velX = Math.random() * 50;
@@ -41,3 +41,33 @@ var end = new Date();
 
 console.log( end.getTime() - start.getTime() );
 
+
+function Asteroider(x, y, velX, velY) {
+  this.x = x || 0;
+  this.y = y || 0;
+  this.velX = velX || 0;
+  this.velY = velY || 0;
+  this.tic = function() {
+    this.x += this.velX;
+    this.y += this.velY;
+  };
+}
+
+var asteroids = [];
+for (var i = 0; i < 100000; i++) {
+    var x = Math.random() * 50;
+    var y = Math.random() * 50;
+    var velX = Math.random() * 50;
+    var velY = Math.random() * 50;
+    asteroids.push(new Asteroider(x, y, velX, velY) );
+}
+
+var start = new Date();
+
+for (var i = 0; i < asteroids.length; i++ ) {
+  asteroids[i].tic();
+}
+
+var end = new Date();
+
+console.log( end.getTime() - start.getTime() );
