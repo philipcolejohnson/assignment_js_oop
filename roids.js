@@ -51,6 +51,15 @@ MY_APP.Asteroid.prototype.tic = function() {
   }
 };
 
+MY_APP.spaceship = Object.create(MY_APP.Asteroid(BOARD_WIDTH/2, BOARD_HEIGHT/2));
+//[x,y] -> boost -> translates into velX adn velY
+MY_APP.spaceship.direction = 0;
+My_APP.spaceship.setDirection = function(direction){
+  MY_APP.spaceship.direction += direction;
+  MY_APP.spaceship.direction %= 360;
+}
+// MY_APP.spaceship.boost = [];
+
 MY_APP.view = {
   init: function() {
 
@@ -75,6 +84,31 @@ MY_APP.view = {
     for(var i = 0; i < MY_APP.asteroids.length; i++) {
       MY_APP.view.roidBody(MY_APP.asteroids[i]);
     }
+  },
+
+  shipBody: function(spaceship) {
+    var canvas = document.getElementById('board');
+    var context = canvas.getContext("2d");
+
+    var x = spaceship.x;
+    var y = spaceship.y;
+    // the triangle
+    // points to x+velX and y+velY
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(x, y+9);
+    context.lineTo(x+9, y+9);
+    context.closePath();
+
+
+    // the outline
+    context.lineWidth = 10;
+    context.strokeStyle = '#666666';
+    context.stroke();
+
+    // the fill color
+    context.fillStyle = "#FFCC00";
+    context.fill();
   }
 };
 
