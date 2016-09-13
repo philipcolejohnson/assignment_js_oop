@@ -13,6 +13,7 @@ APP.game = {
   init: function () {
     APP.game.ship = new APP.Spaceship();
     APP.game.asteroids = [];
+    APP.game.shots = [];
     for (var i = 0; i < ASTEROID_COUNT; i++) {
       APP.game.asteroids.push( new APP.Asteroid() );
     }
@@ -45,12 +46,29 @@ APP.SpaceObject.prototype.tic = function() {
   }
 };
 
+APP.Missile = function(x, y, dir){
+  APP.SpaceObject.call(this, x, y);
+  this.direction = dir;
+  this.x = x;
+  this.y = y;
+  this.velX = 2;
+  this.velY = 2;
+};
+APP.Missile.prototype.fire = function() {
+  var rads = this.direction * Math.PI / 180;
+  this.velX += Math.sin(rads) * -1.3;
+  this.velY += Math.cos(rads) * -1.3;
+};
+
+APP.Missile.prototype = Object.create(APP.SpaceObject.prototype);
+APP.Missile.prototype.constructor = APP.Missile;
+
 APP.Asteroid = function(size,x,y,velX, velY) {
   this.size = size || Math.floor( Math.random() * MAX_SIZE ) + 1;
   this.color = this.getRandomColor();
   APP.SpaceObject.call(this,x,y,velX, velY);
 };
-// Object.setPrototypeOf(APP.Asteroid, APP.SpaceObject.prototype);
+
 APP.Asteroid.prototype = Object.create(APP.SpaceObject.prototype);
 APP.Asteroid.prototype.constructor = APP.Asteroid;
 
@@ -68,6 +86,8 @@ APP.Spaceship = function(x, y) {
   this.direction = 85;
   this.x = x || BOARD_WIDTH/2;
   this.y = y || BOARD_HEIGHT/2;
+  this.velX = 0;
+  this.velY = 0;
 };
 // Object.setPrototypeOf(APP.Spaceship, APP.SpaceObject.prototype);
 APP.Spaceship.prototype = Object.create(APP.SpaceObject.prototype);
@@ -90,6 +110,25 @@ APP.Spaceship.prototype.rotate = function(x, y, angle) {
       nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
       ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
   return [nx, ny];
+};
+
+APP.Spaceship.prototype.thrust = function() {
+  var rads = this.direction * Math.PI / 180;
+  this.velX += Math.sin(rads) * -1.3;
+  this.velY += Math.cos(rads) * -1.3;
+};
+
+APP.Spaceship.prototype.tic = function() {
+  this.velX *= 0.99;
+  this.velY *= 0.99;
+  return APP.SpaceObject.prototype.tic.call(this);
+};
+
+APP.Spaceship.prototype.shoot = function(){
+  var x = this.x;
+  var y = this.y;
+  var dir = this.direction;
+  APP.game.shots.push(new APP.Missile(x, y, dir));
 };
 
 APP.view = {
@@ -144,6 +183,11 @@ APP.view = {
     // the fill color
     context.fillStyle = "#FFCC00";
     context.fill();
+  },
+
+  shotBody: function(){
+
+    
   }
 };
 
@@ -156,8 +200,12 @@ APP.controller = {
 
   tic: function() {
     APP.view.render();
+    APP.game.ship.tic();
     for(var i = 0; i < APP.game.asteroids.length; i++) {
       APP.game.asteroids[i].tic();
+    }
+    for(var j = 0; j < APP.game.shots.length; j++) {
+      APP.game.shots[j].tic();
     }
   },
 
@@ -167,10 +215,16 @@ APP.controller = {
 
     switch(key) {
       case 37:
-        APP.game.ship.direction -= 5;
+        APP.game.ship.direction += 50;
         break;
       case 39:
-        APP.game.ship.direction += 5;
+        APP.game.ship.direction -= 50;
+        break;
+      case 38:
+        APP.game.ship.thrust();
+        break;
+      case 32:
+        APP.game.ship.shoot();
         break;
     }
   }
