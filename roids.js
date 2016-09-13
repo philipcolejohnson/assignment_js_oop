@@ -3,41 +3,32 @@
 ASTEROID_COUNT = 10;
 BOARD_WIDTH = 500;
 BOARD_HEIGHT = 400;
-MAX_SPEED = 3;
+MAX_SPEED = 10;
 MAX_SIZE = 4;
 TIC_INTERVAL = 25;
 
-var MY_APP = {
-  asteroids: [],
-  spaceship: {},
+var APP = APP || {};
 
+APP.game = {
   init: function () {
-    MY_APP.spaceship = new MY_APP.SpaceObject(BOARD_WIDTH/2, BOARD_HEIGHT/2);
+    APP.game.ship = new APP.Spaceship();
+    APP.game.asteroids = [];
     for (var i = 0; i < ASTEROID_COUNT; i++) {
-      MY_APP.asteroids.push( new MY_APP.SpaceObject() );
+      APP.game.asteroids.push( new APP.Asteroid() );
     }
-  },
-
-  getRandomColor: function () {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
-    for (var i = 0; i < 6; i++ ) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
   }
+
 };
 
-MY_APP.SpaceObject = function(x,y,velX, velY, size){
+APP.SpaceObject = function(x,y,velX, velY){
   this.x = x || Math.floor( Math.random() * BOARD_WIDTH ) + 1;
   this.y = y || Math.floor( Math.random() * BOARD_HEIGHT ) + 1;
-  this.velX = velX || (Math.floor( Math.random() * MAX_SPEED ) + 1 ) * (Math.round(Math.random()) * 2 - 1);
-  this.velY = velY || (Math.floor( Math.random() * MAX_SPEED ) + 1 ) * (Math.round(Math.random()) * 2 - 1);
-  this.size = size || Math.floor( Math.random() * MAX_SIZE ) + 1;
-  this.color = MY_APP.getRandomColor();
+  this.velX = velX || (Math.floor( Math.random() * MAX_SPEED ) + 1 ) * (Math.round(Math.random()) * 2 - 1) / MAX_SPEED;
+  this.velY = velY || (Math.floor( Math.random() * MAX_SPEED ) + 1 ) * (Math.round(Math.random()) * 2 - 1) / MAX_SPEED;
+
 };
 
-MY_APP.SpaceObject.prototype.tic = function() {
+APP.SpaceObject.prototype.tic = function() {
   this.x += this.velX;
   this.y += this.velY;
 
@@ -54,15 +45,43 @@ MY_APP.SpaceObject.prototype.tic = function() {
   }
 };
 
-// Object.create(MY_APP.SpaceObject(BOARD_WIDTH/2, BOARD_HEIGHT/2));
-//[x,y] -> boost -> translates into velX adn velY
-MY_APP.spaceship.direction = 0;
-MY_APP.spaceship.setDirection = function(direction){
-  MY_APP.spaceship.direction += direction;
-  MY_APP.spaceship.direction %= 360;
+APP.Asteroid = function(size,x,y,velX, velY) {
+  this.size = size || Math.floor( Math.random() * MAX_SIZE ) + 1;
+  this.color = this.getRandomColor();
+  APP.SpaceObject.call(this,x,y,velX, velY);
+};
+// Object.setPrototypeOf(APP.Asteroid, APP.SpaceObject.prototype);
+APP.Asteroid.prototype = Object.create(APP.SpaceObject.prototype);
+APP.Asteroid.prototype.constructor = APP.Asteroid;
+
+APP.Asteroid.prototype.getRandomColor = function () {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++ ) {
+      color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 };
 
-MY_APP.spaceship.rotate = function(x, y, angle) {
+APP.Spaceship = function(x, y) {
+  APP.SpaceObject.call(this, x, y);
+  this.direction = 85;
+  this.x = x || BOARD_WIDTH/2;
+  this.y = y || BOARD_HEIGHT/2;
+};
+// Object.setPrototypeOf(APP.Spaceship, APP.SpaceObject.prototype);
+APP.Spaceship.prototype = Object.create(APP.SpaceObject.prototype);
+APP.Spaceship.prototype.constructor = APP.Spaceship;
+
+
+//[x,y] -> boost -> translates into velX adn velY
+
+APP.Spaceship.prototype.setDirection = function(direction){
+  this.direction += direction;
+  this.direction %= 360;
+};
+
+APP.Spaceship.prototype.rotate = function(x, y, angle) {
   var cx = this.x,
       cy = this.y;
   var radians = (Math.PI / 180) * angle,
@@ -72,11 +91,10 @@ MY_APP.spaceship.rotate = function(x, y, angle) {
       ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
   return [nx, ny];
 };
-// MY_APP.spaceship.boost = [];
 
-MY_APP.view = {
+APP.view = {
   init: function() {
-
+    APP.view.keyPresser = $(document).keypress(APP.controller.keyHandler);
   },
 
   roidBody: function(asteroid){
@@ -95,8 +113,10 @@ MY_APP.view = {
     var canvas = document.getElementById('board');
     canvas.width = canvas.width;
 
-    for(var i = 0; i < MY_APP.asteroids.length; i++) {
-      MY_APP.view.roidBody(MY_APP.asteroids[i]);
+    APP.view.shipBody(APP.game.ship);
+
+    for(var i = 0; i < APP.game.asteroids.length; i++) {
+      APP.view.roidBody(APP.game.asteroids[i]);
     }
   },
 
@@ -106,10 +126,9 @@ MY_APP.view = {
 
     var x = spaceship.x;
     var y = spaceship.y;
-    var backa = MY_APP.spaceship.rotate(x + 5, y + 10, MY_APP.spaceship.direction);
-    var backb = MY_APP.spaceship.rotate(x - 5, y + 10, MY_APP.spaceship.direction);
+    var backa = spaceship.rotate(x + 10, y + 25, spaceship.direction);
+    var backb = spaceship.rotate(x - 10, y + 25, spaceship.direction);
     // the triangle
-    // points to x+velX and y+velY
     context.beginPath();
     context.moveTo(x, y);
     context.lineTo(backa[0], backa[1]);
@@ -118,7 +137,7 @@ MY_APP.view = {
 
 
     // the outline
-    context.lineWidth = 10;
+    context.lineWidth = 1;
     context.strokeStyle = '#666666';
     context.stroke();
 
@@ -128,20 +147,35 @@ MY_APP.view = {
   }
 };
 
-MY_APP.controller = {
+APP.controller = {
   init: function() {
-    MY_APP.init();
-    MY_APP.loop = setInterval(MY_APP.controller.tic, TIC_INTERVAL);
+    APP.game.init();
+    APP.view.init();
+    APP.game.loop = setInterval(APP.controller.tic, TIC_INTERVAL);
   },
 
   tic: function() {
-    MY_APP.view.render();
-    for(var i = 0; i < MY_APP.asteroids.length; i++) {
-      MY_APP.asteroids[i].tic();
+    APP.view.render();
+    for(var i = 0; i < APP.game.asteroids.length; i++) {
+      APP.game.asteroids[i].tic();
+    }
+  },
+
+  keyHandler: function(e) {
+    var key = e.which;
+    console.log(key);
+
+    switch(key) {
+      case 37:
+        APP.game.ship.direction -= 5;
+        break;
+      case 39:
+        APP.game.ship.direction += 5;
+        break;
     }
   }
 };
 
 $(document).ready(function() {
-  MY_APP.controller.init();
+  APP.controller.init();
 });
