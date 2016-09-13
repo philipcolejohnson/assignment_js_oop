@@ -9,6 +9,7 @@ TIC_INTERVAL = 25;
 
 var MY_APP = {
   asteroids: [],
+  spaceship: {},
 
   init: function () {
     MY_APP.spaceship = new MY_APP.SpaceObject(BOARD_WIDTH/2, BOARD_HEIGHT/2);
@@ -56,7 +57,7 @@ MY_APP.SpaceObject.prototype.tic = function() {
 // Object.create(MY_APP.SpaceObject(BOARD_WIDTH/2, BOARD_HEIGHT/2));
 //[x,y] -> boost -> translates into velX adn velY
 MY_APP.spaceship.direction = 0;
-My_APP.spaceship.setDirection = function(direction){
+MY_APP.spaceship.setDirection = function(direction){
   MY_APP.spaceship.direction += direction;
   MY_APP.spaceship.direction %= 360;
 };
