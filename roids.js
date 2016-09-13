@@ -9,9 +9,11 @@ TIC_INTERVAL = 25;
 
 var MY_APP = {
   asteroids: [],
+
   init: function () {
+    MY_APP.spaceship = new MY_APP.SpaceObject(BOARD_WIDTH/2, BOARD_HEIGHT/2);
     for (var i = 0; i < ASTEROID_COUNT; i++) {
-      MY_APP.asteroids.push( new MY_APP.Asteroid() );
+      MY_APP.asteroids.push( new MY_APP.SpaceObject() );
     }
   },
 
@@ -25,7 +27,7 @@ var MY_APP = {
   }
 };
 
-MY_APP.Asteroid = function(x,y,velX, velY, size){
+MY_APP.SpaceObject = function(x,y,velX, velY, size){
   this.x = x || Math.floor( Math.random() * BOARD_WIDTH ) + 1;
   this.y = y || Math.floor( Math.random() * BOARD_HEIGHT ) + 1;
   this.velX = velX || (Math.floor( Math.random() * MAX_SPEED ) + 1 ) * (Math.round(Math.random()) * 2 - 1);
@@ -34,7 +36,7 @@ MY_APP.Asteroid = function(x,y,velX, velY, size){
   this.color = MY_APP.getRandomColor();
 };
 
-MY_APP.Asteroid.prototype.tic = function() {
+MY_APP.SpaceObject.prototype.tic = function() {
   this.x += this.velX;
   this.y += this.velY;
 
@@ -51,13 +53,24 @@ MY_APP.Asteroid.prototype.tic = function() {
   }
 };
 
-MY_APP.spaceship = Object.create(MY_APP.Asteroid(BOARD_WIDTH/2, BOARD_HEIGHT/2));
+// Object.create(MY_APP.SpaceObject(BOARD_WIDTH/2, BOARD_HEIGHT/2));
 //[x,y] -> boost -> translates into velX adn velY
 MY_APP.spaceship.direction = 0;
 My_APP.spaceship.setDirection = function(direction){
   MY_APP.spaceship.direction += direction;
   MY_APP.spaceship.direction %= 360;
-}
+};
+
+MY_APP.spaceship.rotate = function(x, y, angle) {
+  var cx = this.x,
+      cy = this.y;
+  var radians = (Math.PI / 180) * angle,
+      cos = Math.cos(radians),
+      sin = Math.sin(radians),
+      nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+      ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+  return [nx, ny];
+};
 // MY_APP.spaceship.boost = [];
 
 MY_APP.view = {
@@ -92,12 +105,14 @@ MY_APP.view = {
 
     var x = spaceship.x;
     var y = spaceship.y;
+    var backa = MY_APP.spaceship.rotate(x + 5, y + 10, MY_APP.spaceship.direction);
+    var backb = MY_APP.spaceship.rotate(x - 5, y + 10, MY_APP.spaceship.direction);
     // the triangle
     // points to x+velX and y+velY
     context.beginPath();
     context.moveTo(x, y);
-    context.lineTo(x, y+9);
-    context.lineTo(x+9, y+9);
+    context.lineTo(backa[0], backa[1]);
+    context.lineTo(backb[0], backb[1]);
     context.closePath();
 
 
